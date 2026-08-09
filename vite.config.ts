@@ -2,6 +2,7 @@ import { defineConfig } from "vitest/config";
 import solid from "vite-plugin-solid";
 
 export default defineConfig(({ mode }) => ({
+  base: mode === "github-pages" ? "/vercomp/" : "/",
   plugins: [solid({ hot: mode !== "test", dev: mode !== "test" })],
   resolve: {
     alias: {
