@@ -1,4 +1,4 @@
-import { createSignal, Show } from "solid-js";
+import { createSignal, onCleanup, Show } from "solid-js";
 import type {
   CompareItem,
   CompareManifest,
@@ -37,12 +37,17 @@ const KIND_LABEL: Record<CompareItem["kind"], string> = {
   placeholder: "内部项",
 };
 
+// A click must wait briefly so that a following double-click can cancel it.
+// `dblclick` is dispatched only after the two `click` events.
+const DETAIL_CLICK_DELAY_MS = 350;
+
 function shortVersion(version: string) {
   return version.startsWith("v") ? version.slice(1) : version;
 }
 
 export function CompareRow(props: CompareRowProps) {
   const [imageFailed, setImageFailed] = createSignal(false);
+  let pendingDetailsTimer: number | undefined;
   const selectedVersion = () => props.selections[String(props.item.id)];
   const diverged = () =>
     props.isMaster &&
@@ -57,6 +62,22 @@ export function CompareRow(props: CompareRowProps) {
       version: segment.representativeVersion,
     });
   };
+
+  const cancelPendingDetails = () => {
+    if (pendingDetailsTimer === undefined) return;
+    window.clearTimeout(pendingDetailsTimer);
+    pendingDetailsTimer = undefined;
+  };
+
+  const scheduleDetails = (segment: VersionSegment) => {
+    cancelPendingDetails();
+    pendingDetailsTimer = window.setTimeout(() => {
+      pendingDetailsTimer = undefined;
+      showDetails(segment);
+    }, DETAIL_CLICK_DELAY_MS);
+  };
+
+  onCleanup(cancelPendingDetails);
 
   return (
     <div
@@ -137,8 +158,9 @@ export function CompareRow(props: CompareRowProps) {
             }`}
             title={`${range}\n单击查看详情，双击选择或取消`}
             data-segment={`${segment.start}-${segment.end}`}
-            onClick={() => showDetails(segment)}
+            onClick={() => scheduleDetails(segment)}
             onDblClick={(event) => {
+              cancelPendingDetails();
               event.preventDefault();
               event.stopPropagation();
               props.onToggleSelection(segment);
@@ -151,4 +173,3 @@ export function CompareRow(props: CompareRowProps) {
     </div>
   );
 }
-

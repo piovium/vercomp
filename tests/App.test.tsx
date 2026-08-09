@@ -49,7 +49,9 @@ describe("App", () => {
       '[data-item-id="1"] [data-segment="0-0"]',
     ) as HTMLButtonElement;
     fireEvent.click(segment);
-    const drawer = screen.getByRole("complementary", { name: "主角色详情" });
+    const drawer = await screen.findByRole("complementary", {
+      name: "主角色详情",
+    });
     expect(drawer).toBeVisible();
     expect(screen.getByRole("status")).toHaveTextContent("加载中");
     await screen.findByText("主角色", { selector: ".card-panel *" });
@@ -57,13 +59,34 @@ describe("App", () => {
     expect(screen.queryByRole("complementary")).not.toBeInTheDocument();
   });
 
-  test("keeps the open drawer mounted during a segment double-click", () => {
+  test("does not open the details drawer on a segment double-click", () => {
+    vi.useFakeTimers();
+    try {
+      const view = render(() => <App manifest={createManifestFixture()} />);
+      const segment = view.container.querySelector(
+        '[data-item-id="1"] [data-segment="0-0"]',
+      ) as HTMLButtonElement;
+
+      fireEvent.click(segment);
+      fireEvent.click(segment);
+      fireEvent.dblClick(segment);
+      vi.advanceTimersByTime(500);
+
+      expect(screen.queryByRole("complementary")).not.toBeInTheDocument();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  test("keeps the open drawer mounted during a segment double-click", async () => {
     const view = render(() => <App manifest={createManifestFixture()} />);
     const segment = view.container.querySelector(
       '[data-item-id="1"] [data-segment="0-0"]',
     ) as HTMLButtonElement;
     fireEvent.click(segment);
-    const drawer = screen.getByRole("complementary", { name: "主角色详情" });
+    const drawer = await screen.findByRole("complementary", {
+      name: "主角色详情",
+    });
 
     fireEvent.click(segment);
     fireEvent.click(segment);

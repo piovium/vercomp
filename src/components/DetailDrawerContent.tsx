@@ -35,12 +35,19 @@ export function DetailDrawerContent(props: DetailDrawerContentProps) {
   createEffect(() => {
     const target = props.target;
     if (target.kind === "character") {
-      viewer.showCharacter(target.id, { includesImage: true });
+      viewer.showCharacter(target.id);
     } else if (target.kind === "skill") {
       viewer.showSkill(target.id);
     } else {
-      viewer.showCard(target.id, {
-        includesImage: target.kind === "action-card",
+      viewer.showState("entity", {
+        id: 0,
+        definitionId: target.id,
+        tags: 0,
+        type: 0,
+        descriptionDictionary: {},
+        hasUsagePerRound: false,
+        attachment: [],
+        definitionCost: [], 
       });
     }
   });
