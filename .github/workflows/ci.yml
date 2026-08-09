@@ -1,0 +1,66 @@
+name: Build version selector
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      STATIC_DATA_PATH: .cache/static-data
+      DEPENDENCY_DATA_PATH: .cache/dependencies.json
+    steps:
+      - name: Checkout project
+        uses: actions/checkout@v4
+
+      - name: Checkout static-data
+        uses: actions/checkout@v4
+        with:
+          repository: piovium/static-data
+          path: .cache/static-data
+
+      - name: Download dependency graph
+        run: |
+          mkdir -p .cache
+          curl --fail --location --retry 3 \
+            https://play.piovium.org/api/data_code_analyzer_result \
+            --output .cache/dependencies.json
+          node -e "const fs=require('node:fs'); const value=JSON.parse(fs.readFileSync('.cache/dependencies.json','utf8')); if (!Array.isArray(value)) throw new Error('dependency graph must be an array')"
+
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 26
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Playwright Chromium
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: Generate and check
+        run: pnpm check
+
+      - name: Unit and component tests
+        run: pnpm test
+
+      - name: End-to-end tests
+        run: pnpm test:e2e
+
+      - name: Production build
+        run: pnpm build
+
+      - name: Upload static application
+        uses: actions/upload-artifact@v4
+        with:
+          name: gi-tcg-version-selector
+          path: dist
+

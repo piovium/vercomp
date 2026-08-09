@@ -1,0 +1,40 @@
+{
+  "name": "gi-tcg-version-compare-and-select",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=26.0.0"
+  },
+  "packageManager": "pnpm@11.17.0",
+  "scripts": {
+    "generate:data": "node scripts/generate-data.ts",
+    "predev": "pnpm generate:data",
+    "dev": "vite",
+    "prebuild": "pnpm generate:data",
+    "build": "vite build && node scripts/check-dist.ts",
+    "precheck": "pnpm generate:data",
+    "check": "tsc --noEmit",
+    "pretest": "pnpm generate:data",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:e2e": "playwright test"
+  },
+  "dependencies": {
+    "@gi-tcg/assets-manager": "^0.20.7",
+    "@gi-tcg/card-data-viewer": "^0.20.7",
+    "@gi-tcg/typings": "^0.20.7",
+    "solid-js": "^1.9.12"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.50.0",
+    "@solidjs/testing-library": "^0.8.10",
+    "@testing-library/jest-dom": "6.9.1",
+    "@types/node": "latest",
+    "jsdom": "^26.0.0",
+    "typescript": "~6.0.3",
+    "vite": "^8.0.8",
+    "vite-plugin-solid": "^2.11.13",
+    "vitest": "^4.1.6"
+  }
+}
