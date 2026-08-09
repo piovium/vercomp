@@ -5,6 +5,7 @@ import { afterEach, describe, expect, test } from "vitest";
 import {
   buildManifest,
   buildSegments,
+  isMasterActionCard,
   mergeDependencyGraph,
   selectVersions,
   traceRelationships,
@@ -53,6 +54,24 @@ describe("data generator", () => {
       { start: 0, end: 0, representativeVersion: "v3.3.0" },
       { start: 2, end: 2, representativeVersion: "v3.5.0" },
     ]);
+  });
+
+  test("classifies master action cards by character relation and adventure tag", () => {
+    expect(isMasterActionCard({ id: 1, shareId: 1 })).toBe(true);
+    expect(
+      isMasterActionCard({ id: 2, shareId: 2, relatedCharacterId: 1001 }),
+    ).toBe(false);
+    expect(
+      isMasterActionCard({ id: 3, tags: ["GCG_TAG_ADVENTURE_PLACE"] }),
+    ).toBe(true);
+    expect(
+      isMasterActionCard({
+        id: 4,
+        shareId: 4,
+        relatedCharacterId: 1001,
+        tags: ["GCG_TAG_ADVENTURE_PLACE"],
+      }),
+    ).toBe(false);
   });
 
   test("merges duplicates, stops at masters and survives cycles", () => {
@@ -106,6 +125,19 @@ describe("data generator", () => {
           playCost: [{ type: "VOID", count: 1 }],
           description: "不变",
         },
+        {
+          id: 101,
+          shareId: 3,
+          relatedCharacterId: 1,
+          name: "角色关联牌",
+          description: "关联",
+        },
+        {
+          id: 102,
+          name: "冒险地点牌",
+          tags: ["GCG_TAG_ADVENTURE_PLACE"],
+          description: "地点",
+        },
       ]);
       await writeJson(path.join(dataRoot, "entities.json"), [
         { id: 20, name: "关联实体", description: "X", skills: [] },
@@ -125,7 +157,8 @@ describe("data generator", () => {
     ]);
 
     const manifest = await buildManifest(staticRoot, analyzerPath);
-    expect(manifest.relatedIdsByMaster["1"]).toEqual([11, 20, 999]);
+    expect(manifest.masterActionCardIds).toEqual([100, 102]);
+    expect(manifest.relatedIdsByMaster["1"]).toEqual([11, 20, 101, 999]);
     expect(manifest.otherEntityIds).toEqual([30, 888]);
     expect(manifest.itemsById["888"]).toMatchObject({
       name: "OnlyAnalyzer",

@@ -31,11 +31,23 @@ interface StaticEntry {
   id: number;
   name?: string;
   shareId?: number | null;
+  relatedCharacterId?: number | null;
+  tags?: string[];
   hp?: number;
   maxEnergy?: number;
   playCost?: PlayCost[];
   description?: string;
   skills?: StaticSkill[];
+}
+
+const ADVENTURE_PLACE_TAG = "GCG_TAG_ADVENTURE_PLACE";
+
+export function isMasterActionCard(actionCard: StaticEntry): boolean {
+  if (actionCard.relatedCharacterId != null) return false;
+  return (
+    actionCard.shareId != null ||
+    actionCard.tags?.includes(ADVENTURE_PLACE_TAG) === true
+  );
 }
 
 interface AnalyzerEntry {
@@ -56,6 +68,7 @@ interface LoadedSource {
   versionIndexes: Map<Version, Map<number, IndexedValue>>;
   masterCharacterIds: Set<number>;
   masterActionCardIds: Set<number>;
+  relatedActionCardIdsByCharacter: Map<number, Set<number>>;
   names: Map<number, string>;
   kinds: Map<number, Exclude<ItemKind, "placeholder">>;
 }
@@ -157,6 +170,7 @@ async function loadStaticSource(staticDataPath: string): Promise<LoadedSource> {
   const versionIndexes = new Map<Version, Map<number, IndexedValue>>();
   const masterCharacterIds = new Set<number>();
   const masterActionCardIds = new Set<number>();
+  const relatedActionCardIdsByCharacter = new Map<number, Set<number>>();
   const names = new Map<number, string>();
   const kinds = new Map<number, Exclude<ItemKind, "placeholder">>();
 
@@ -220,8 +234,18 @@ async function loadStaticSource(staticDataPath: string): Promise<LoadedSource> {
         names,
         kinds,
       );
-      if (actionCard.shareId != null) {
+      if (isMasterActionCard(actionCard)) {
         masterActionCardIds.add(actionCard.id);
+      }
+      if (actionCard.relatedCharacterId != null) {
+        const relatedIds =
+          relatedActionCardIdsByCharacter.get(actionCard.relatedCharacterId) ??
+          new Set<number>();
+        relatedIds.add(actionCard.id);
+        relatedActionCardIdsByCharacter.set(
+          actionCard.relatedCharacterId,
+          relatedIds,
+        );
       }
     }
 
@@ -233,6 +257,7 @@ async function loadStaticSource(staticDataPath: string): Promise<LoadedSource> {
     versionIndexes,
     masterCharacterIds,
     masterActionCardIds,
+    relatedActionCardIdsByCharacter,
     names,
     kinds,
   };
@@ -344,6 +369,14 @@ export async function buildManifest(
   const source = await loadStaticSource(staticDataPath);
   const analyzerEntries = await readJson<AnalyzerEntry[]>(dependencyDataPath);
   const { dependencies, bindingNames } = mergeDependencyGraph(analyzerEntries);
+  for (const [characterId, actionCardIds] of
+    source.relatedActionCardIdsByCharacter) {
+    const relatedIds = dependencies.get(characterId) ?? new Set<number>();
+    for (const actionCardId of actionCardIds) {
+      relatedIds.add(actionCardId);
+    }
+    dependencies.set(characterId, relatedIds);
+  }
   const allMasterIds = new Set([
     ...source.masterCharacterIds,
     ...source.masterActionCardIds,
