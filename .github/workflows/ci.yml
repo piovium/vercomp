@@ -29,6 +29,7 @@ jobs:
         with:
           repository: piovium/static-data
           path: .cache/static-data
+          token: ${{ secrets.STATIC_DATA_PAT }}
 
       - name: Download dependency graph
         run: |
