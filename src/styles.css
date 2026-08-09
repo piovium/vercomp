@@ -6,7 +6,7 @@
     sans-serif;
   font-synthesis: none;
   --row-heading-width: 300px;
-  --version-width: 116px;
+  --version-width: 40px;
   --line: rgba(255, 255, 255, 0.09);
   --panel: #1b202b;
   --panel-strong: #252c39;
@@ -327,6 +327,8 @@ button {
   box-shadow: 0 4px 11px rgba(0, 0, 0, 0.2);
   cursor: pointer;
   user-select: none;
+  text-align: right;
+  font-size: 12px;
 }
 
 .version-segment:hover {
@@ -347,7 +349,6 @@ button {
 .version-segment span {
   display: block;
   overflow: hidden;
-  text-overflow: ellipsis;
   white-space: nowrap;
 }
 
