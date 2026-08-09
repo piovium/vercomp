@@ -24,15 +24,16 @@ test("keeps headers frozen in both scroll directions", async ({ page }) => {
     .toBeCloseTo(initialCorner!.y, 0);
 });
 
-test("opens details and persists a double-click selection", async ({ page }) => {
+test("keeps the details panel visible and persists a double-click selection", async ({ page }) => {
   const segment = page.locator('[data-master="true"] .version-segment').first();
+  const panel = page.locator(".detail-panel");
+  await expect(panel).toContainText("点击任意卡牌版本显示详情");
+  const panelBox = await panel.boundingBox();
+  const viewport = page.viewportSize();
+  expect(panelBox!.x + panelBox!.width).toBeCloseTo(viewport!.width, 0);
   await segment.click();
-  const drawer = page.locator(".detail-drawer");
-  await expect(drawer).toBeVisible();
-  await drawer.evaluate((element) =>
-    Promise.all(element.getAnimations().map((animation) => animation.finished)),
-  );
-  await page.getByRole("button", { name: "关闭详情" }).click();
+  await expect(panel).toBeVisible();
+  await expect(panel).not.toContainText("点击任意卡牌版本显示详情");
 
   await segment.dblclick();
   await expect(segment).toHaveAttribute("aria-pressed", "true");
@@ -45,33 +46,17 @@ test("opens details and persists a double-click selection", async ({ page }) => 
   ).toBeVisible();
 });
 
-test("does not restart the open drawer animation on double-click", async ({
+test("keeps the open detail panel mounted during a double-click", async ({
   page,
 }) => {
   const segment = page.locator('[data-master="true"] .version-segment').first();
   await segment.click();
-  const drawer = page.locator(".detail-drawer");
-  await expect(drawer).toBeVisible();
-  await drawer.evaluate((element) => {
-    (window as typeof window & { drawerAnimationStarts: number })
-      .drawerAnimationStarts = 0;
-    document.addEventListener("animationstart", (event) => {
-      if ((event.target as Element).classList.contains("detail-drawer")) {
-        (window as typeof window & { drawerAnimationStarts: number })
-          .drawerAnimationStarts += 1;
-      }
-    });
-  });
+  const panel = page.locator(".detail-panel");
+  await expect(panel).toBeVisible();
+  await panel.evaluate((element) =>
+    element.setAttribute("data-mounted-marker", "true"),
+  );
 
   await segment.dblclick();
-
-  await expect
-    .poll(() =>
-      page.evaluate(
-        () =>
-          (window as typeof window & { drawerAnimationStarts: number })
-            .drawerAnimationStarts,
-      ),
-    )
-    .toBe(0);
+  await expect(panel).toHaveAttribute("data-mounted-marker", "true");
 });

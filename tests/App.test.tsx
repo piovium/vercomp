@@ -27,7 +27,7 @@ describe("App", () => {
     });
   });
 
-  test("opens and closes the details drawer on a segment click", async () => {
+  test("keeps a details panel visible and updates it on a segment click", async () => {
     vi.stubGlobal(
       "fetch",
       vi.fn(async () =>
@@ -45,21 +45,21 @@ describe("App", () => {
       ),
     );
     const view = render(() => <App manifest={createManifestFixture()} />);
+    const panel = screen.getByRole("complementary", {
+      name: "卡牌版本详情",
+    });
+    expect(panel).toBeVisible();
+    expect(panel).toHaveTextContent("点击任意卡牌版本显示详情");
     const segment = view.container.querySelector(
       '[data-item-id="1"] [data-segment="0-0"]',
     ) as HTMLButtonElement;
     fireEvent.click(segment);
-    const drawer = await screen.findByRole("complementary", {
-      name: "主角色详情",
-    });
-    expect(drawer).toBeVisible();
-    expect(screen.getByRole("status")).toHaveTextContent("加载中");
+    expect(await screen.findByRole("status")).toHaveTextContent("加载中");
     await screen.findByText("主角色", { selector: ".card-panel *" });
-    fireEvent.click(screen.getByRole("button", { name: "关闭详情" }));
-    expect(screen.queryByRole("complementary")).not.toBeInTheDocument();
+    expect(panel).toHaveTextContent("主角色");
   });
 
-  test("does not open the details drawer on a segment double-click", () => {
+  test("keeps the default panel content after a segment double-click", () => {
     vi.useFakeTimers();
     try {
       const view = render(() => <App manifest={createManifestFixture()} />);
@@ -72,28 +72,30 @@ describe("App", () => {
       fireEvent.dblClick(segment);
       vi.advanceTimersByTime(500);
 
-      expect(screen.queryByRole("complementary")).not.toBeInTheDocument();
+      expect(
+        screen.getByRole("complementary", { name: "卡牌版本详情" }),
+      ).toHaveTextContent("点击任意卡牌版本显示详情");
     } finally {
       vi.useRealTimers();
     }
   });
 
-  test("keeps the open drawer mounted during a segment double-click", async () => {
+  test("keeps the open detail panel mounted during a segment double-click", async () => {
     const view = render(() => <App manifest={createManifestFixture()} />);
     const segment = view.container.querySelector(
       '[data-item-id="1"] [data-segment="0-0"]',
     ) as HTMLButtonElement;
     fireEvent.click(segment);
-    const drawer = await screen.findByRole("complementary", {
-      name: "主角色详情",
+    const panel = await screen.findByRole("complementary", {
+      name: "卡牌版本详情",
     });
 
     fireEvent.click(segment);
     fireEvent.click(segment);
     fireEvent.dblClick(segment);
 
-    expect(screen.getByRole("complementary", { name: "主角色详情" })).toBe(
-      drawer,
+    expect(screen.getByRole("complementary", { name: "卡牌版本详情" })).toBe(
+      panel,
     );
   });
 

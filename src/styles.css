@@ -12,6 +12,7 @@
   --panel-strong: #252c39;
   --accent: #e9b86e;
   --accent-strong: #ffd38d;
+  --detail-panel-width: 20em;
 }
 
 * {
@@ -32,6 +33,7 @@ button {
 
 .app-shell {
   display: grid;
+  grid-template-columns: minmax(0, 1fr) var(--detail-panel-width);
   grid-template-rows: auto minmax(0, 1fr);
   height: 100%;
   overflow: hidden;
@@ -41,6 +43,7 @@ button {
 }
 
 .app-toolbar {
+  grid-column: 1 / -1;
   min-height: 86px;
   display: flex;
   align-items: center;
@@ -91,6 +94,9 @@ button {
 }
 
 .table-scroll {
+  grid-column: 1;
+  grid-row: 2;
+  min-width: 0;
   overflow: auto;
   position: relative;
   isolation: isolate;
@@ -362,29 +368,17 @@ button {
   font-style: italic;
 }
 
-.detail-drawer {
-  position: fixed;
-  top: 0;
-  right: 0;
-  z-index: 30;
-  width: min(420px, 100vw);
-  height: 100%;
+.detail-panel {
+  grid-column: 2;
+  grid-row: 2;
+  min-width: 0;
   display: flex;
   flex-direction: column;
   border-left: 1px solid #4b5567;
   background: #171b24;
-  box-shadow: -18px 0 45px rgba(0, 0, 0, 0.48);
-  animation: drawer-in 150ms ease-out;
 }
 
-@keyframes drawer-in {
-  from {
-    transform: translateX(24px);
-    opacity: 0;
-  }
-}
-
-.drawer-header {
+.detail-panel-header {
   min-height: 66px;
   display: flex;
   align-items: center;
@@ -395,44 +389,37 @@ button {
   background: #202631;
 }
 
-.drawer-header > div {
+.detail-panel-header > div {
   min-width: 0;
   display: flex;
   flex-direction: column;
   gap: 3px;
 }
 
-.drawer-header strong {
+.detail-panel-header strong {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.drawer-header span {
+.detail-panel-header span {
   color: var(--accent);
   font-size: 11px;
 }
 
-.drawer-close {
-  width: 36px;
-  height: 36px;
-  flex: 0 0 auto;
-  border: 1px solid #596174;
-  border-radius: 8px;
-  color: #e2e6ec;
-  background: #2b3240;
-  font-size: 23px;
-  line-height: 1;
-  cursor: pointer;
-}
-
-.drawer-content {
+.detail-panel-content {
+  min-height: 0;
   flex: 1;
   overflow: auto;
   padding: 16px;
 }
 
-.drawer-loading {
+.detail-panel-content .gi-tcg-card-data-viewer {
+  flex-direction: column;
+}
+
+.detail-panel-loading,
+.detail-panel-placeholder {
   display: grid;
   min-height: 120px;
   place-items: center;
@@ -440,7 +427,12 @@ button {
   font-size: 13px;
 }
 
-.drawer-content .gi-tcg-card-data-viewer {
+.detail-panel-placeholder {
+  margin: 0;
+  text-align: center;
+}
+
+.detail-panel-content .gi-tcg-card-data-viewer {
   width: 100%;
   color: initial;
 }
@@ -449,6 +441,7 @@ button {
   :root {
     --row-heading-width: 245px;
     --version-width: 104px;
+    --detail-panel-width: min(42vw, 300px);
   }
 
   .app-toolbar {
@@ -467,11 +460,5 @@ button {
 
   .related-row .row-heading {
     padding-left: 24px;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .detail-drawer {
-    animation: none;
   }
 }

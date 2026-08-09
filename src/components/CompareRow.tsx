@@ -9,7 +9,7 @@ import {
   segmentContains,
   type SelectionMap,
 } from "../state/selections.ts";
-import type { DetailTarget } from "./DetailDrawer.tsx";
+import type { DetailTarget } from "./DetailPanel.tsx";
 
 interface CompareRowProps {
   manifest: CompareManifest;

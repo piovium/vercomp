@@ -2,9 +2,9 @@ import { AssetsManager } from "@gi-tcg/assets-manager";
 import { createCardDataViewer } from "@gi-tcg/card-data-viewer";
 import { createEffect, createMemo } from "solid-js";
 import type { Version } from "../data/types.ts";
-import type { DetailTarget } from "./DetailDrawer.tsx";
+import type { DetailTarget } from "./DetailPanel.tsx";
 
-interface DetailDrawerContentProps {
+interface DetailPanelContentProps {
   target: DetailTarget;
 }
 
@@ -12,7 +12,7 @@ const API_ENDPOINT =
   import.meta.env.VITE_ASSETS_API_ENDPOINT ??
   "https://static-data.piovium.org/api/v4";
 
-export function DetailDrawerContent(props: DetailDrawerContentProps) {
+export function DetailPanelContent(props: DetailPanelContentProps) {
   const managers = new Map<Version, AssetsManager>();
   const manager = createMemo(() => {
     const version = props.target.version;
@@ -38,6 +38,8 @@ export function DetailDrawerContent(props: DetailDrawerContentProps) {
       viewer.showCharacter(target.id);
     } else if (target.kind === "skill") {
       viewer.showSkill(target.id);
+    } else if (target.kind === "action-card") {
+      viewer.showCard(target.id);
     } else {
       viewer.showState("entity", {
         id: 0,
@@ -47,7 +49,7 @@ export function DetailDrawerContent(props: DetailDrawerContentProps) {
         descriptionDictionary: {},
         hasUsagePerRound: false,
         attachment: [],
-        definitionCost: [], 
+        definitionCost: [],
       });
     }
   });

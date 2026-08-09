@@ -3,9 +3,9 @@ import generatedManifest from "./generated/compare-data.json";
 import type { CompareManifest, VersionSegment } from "./data/types.ts";
 import { CompareRow } from "./components/CompareRow.tsx";
 import {
-  DetailDrawer,
+  DetailPanel,
   type DetailTarget,
-} from "./components/DetailDrawer.tsx";
+} from "./components/DetailPanel.tsx";
 import {
   downloadSelections,
   loadSelections,
@@ -177,10 +177,7 @@ export function App(props: AppProps) {
         </For>
       </div>
 
-      <DetailDrawer
-        target={detailTarget()}
-        onClose={() => setDetailTarget(null)}
-      />
+      <DetailPanel target={detailTarget()} />
     </main>
   );
 }
