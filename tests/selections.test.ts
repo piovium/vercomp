@@ -10,15 +10,11 @@ import {
 } from "../src/state/selections.ts";
 
 describe("selection state", () => {
-  test("selects a master and resets available related items", () => {
+  test("selects a master as a group without selecting related items", () => {
     const manifest = createManifestFixture();
     const segment = manifest.masterSegmentsById["1"]![2]!;
     const selected = toggleSelection(manifest, {}, 1, segment, true);
-    expect(selected).toEqual({
-      "1": "v3.5.0",
-      "2": "v3.5.0",
-      "3": "v3.5.0",
-    });
+    expect(selected).toEqual({ "1": "v3.5.0" });
     expect(isMasterDiverged(manifest, selected, 1)).toBe(false);
   });
 
@@ -33,13 +29,11 @@ describe("selection state", () => {
     expect(isMasterDiverged(manifest, diverged, 1)).toBe(true);
 
     const reset = toggleSelection(manifest, diverged, 1, segment, true);
-    expect(reset["1"]).toBe("v3.5.0");
-    expect(reset["2"]).toBe("v3.5.0");
+    expect(reset).toEqual({ "1": "v3.5.0" });
+    expect(isMasterDiverged(manifest, reset, 1)).toBe(false);
 
     const cancelled = toggleSelection(manifest, reset, 1, segment, true);
-    expect(cancelled["1"]).toBeUndefined();
-    expect(cancelled["2"]).toBe("v3.5.0");
-    expect(cancelled["3"]).toBe("v3.5.0");
+    expect(cancelled).toEqual({});
   });
 
   test("clears related selections unavailable at the master version", () => {
@@ -52,7 +46,7 @@ describe("selection state", () => {
       early,
       true,
     );
-    expect(selected).toEqual({ "1": "v3.3.0", "2": "v3.3.0" });
+    expect(selected).toEqual({ "1": "v3.3.0" });
   });
 
   test("sanitizes storage and exports numeric IDs in order", () => {
@@ -83,4 +77,3 @@ describe("selection state", () => {
     ).toEqual({});
   });
 });
-

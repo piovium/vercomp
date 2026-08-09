@@ -1,6 +1,4 @@
-import { AssetsManager } from "@gi-tcg/assets-manager";
-import { createCardDataViewer } from "@gi-tcg/card-data-viewer";
-import { createEffect, createMemo, onCleanup, onMount, Show } from "solid-js";
+import { lazy, onCleanup, onMount, Show, Suspense } from "solid-js";
 import type { ItemKind, Version } from "../data/types.ts";
 
 export interface DetailTarget {
@@ -15,54 +13,11 @@ interface DetailDrawerProps {
   onClose: () => void;
 }
 
-const API_ENDPOINT =
-  import.meta.env.VITE_ASSETS_API_ENDPOINT ??
-  "https://static-data.piovium.org/api/v4";
+const DetailDrawerContent = lazy(async () => ({
+  default: (await import("./DetailDrawerContent.tsx")).DetailDrawerContent,
+}));
 
 export function DetailDrawer(props: DetailDrawerProps) {
-  const managers = new Map<Version, AssetsManager>();
-  const manager = createMemo(() => {
-    const version = props.target?.version ?? "latest";
-    if (version === "latest") {
-      return new AssetsManager({
-        apiEndpoint: API_ENDPOINT,
-        language: "CHS",
-        version,
-      });
-    }
-    let existing = managers.get(version);
-    if (!existing) {
-      existing = new AssetsManager({
-        apiEndpoint: API_ENDPOINT,
-        language: "CHS",
-        version,
-      });
-      managers.set(version, existing);
-    }
-    return existing;
-  });
-  const viewer = createCardDataViewer({
-    assetsManager: manager,
-    locale: () => "zh-CN",
-  });
-
-  createEffect(() => {
-    const target = props.target;
-    if (!target) {
-      viewer.hide();
-      return;
-    }
-    if (target.kind === "character") {
-      viewer.showCharacter(target.id, { includesImage: true });
-    } else if (target.kind === "skill") {
-      viewer.showSkill(target.id);
-    } else {
-      viewer.showCard(target.id, {
-        includesImage: target.kind === "action-card",
-      });
-    }
-  });
-
   const onKeyDown = (event: KeyboardEvent) => {
     if (event.key === "Escape" && props.target) props.onClose();
   };
@@ -88,11 +43,18 @@ export function DetailDrawer(props: DetailDrawerProps) {
             </button>
           </header>
           <div class="drawer-content">
-            <viewer.CardDataViewer />
+            <Suspense
+              fallback={
+                <div class="drawer-loading" role="status">
+                  加载中…
+                </div>
+              }
+            >
+              <DetailDrawerContent target={target()} />
+            </Suspense>
           </div>
         </aside>
       )}
     </Show>
   );
 }
-

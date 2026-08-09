@@ -88,11 +88,7 @@ function resetMaster(
 ) {
   const next = { ...selections, [String(masterId)]: version };
   for (const relatedId of manifest.relatedIdsByMaster[String(masterId)] ?? []) {
-    if (itemExistsAt(manifest, relatedId, version)) {
-      next[String(relatedId)] = version;
-    } else {
-      delete next[String(relatedId)];
-    }
+    delete next[String(relatedId)];
   }
   return next;
 }
@@ -107,9 +103,11 @@ export function isMasterDiverged(
   return (manifest.relatedIdsByMaster[String(masterId)] ?? []).some(
     (relatedId) => {
       const relatedVersion = selections[String(relatedId)];
-      return itemExistsAt(manifest, relatedId, masterVersion)
-        ? relatedVersion !== masterVersion
-        : relatedVersion !== undefined;
+      return (
+        relatedVersion !== undefined &&
+        (!itemExistsAt(manifest, relatedId, masterVersion) ||
+          relatedVersion !== masterVersion)
+      );
     },
   );
 }
@@ -175,4 +173,3 @@ export function downloadSelections(selections: SelectionMap) {
   anchor.click();
   URL.revokeObjectURL(url);
 }
-

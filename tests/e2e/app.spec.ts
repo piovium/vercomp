@@ -27,7 +27,11 @@ test("keeps headers frozen in both scroll directions", async ({ page }) => {
 test("opens details and persists a double-click selection", async ({ page }) => {
   const segment = page.locator('[data-master="true"] .version-segment').first();
   await segment.click();
-  await expect(page.locator(".detail-drawer")).toBeVisible();
+  const drawer = page.locator(".detail-drawer");
+  await expect(drawer).toBeVisible();
+  await drawer.evaluate((element) =>
+    Promise.all(element.getAnimations().map((animation) => animation.finished)),
+  );
   await page.getByRole("button", { name: "关闭详情" }).click();
 
   await segment.dblclick();
@@ -41,3 +45,33 @@ test("opens details and persists a double-click selection", async ({ page }) => 
   ).toBeVisible();
 });
 
+test("does not restart the open drawer animation on double-click", async ({
+  page,
+}) => {
+  const segment = page.locator('[data-master="true"] .version-segment').first();
+  await segment.click();
+  const drawer = page.locator(".detail-drawer");
+  await expect(drawer).toBeVisible();
+  await drawer.evaluate((element) => {
+    (window as typeof window & { drawerAnimationStarts: number })
+      .drawerAnimationStarts = 0;
+    document.addEventListener("animationstart", (event) => {
+      if ((event.target as Element).classList.contains("detail-drawer")) {
+        (window as typeof window & { drawerAnimationStarts: number })
+          .drawerAnimationStarts += 1;
+      }
+    });
+  });
+
+  await segment.dblclick();
+
+  await expect
+    .poll(() =>
+      page.evaluate(
+        () =>
+          (window as typeof window & { drawerAnimationStarts: number })
+            .drawerAnimationStarts,
+      ),
+    )
+    .toBe(0);
+});

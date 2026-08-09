@@ -431,6 +431,14 @@ button {
   padding: 16px;
 }
 
+.drawer-loading {
+  display: grid;
+  min-height: 120px;
+  place-items: center;
+  color: #aeb8c8;
+  font-size: 13px;
+}
+
 .drawer-content .gi-tcg-card-data-viewer {
   width: 100%;
   color: initial;

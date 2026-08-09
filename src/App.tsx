@@ -1,8 +1,11 @@
-import { createEffect, createSignal, For, lazy, Show, Suspense } from "solid-js";
+import { createEffect, createSignal, For, Show } from "solid-js";
 import generatedManifest from "./generated/compare-data.json";
 import type { CompareManifest, VersionSegment } from "./data/types.ts";
 import { CompareRow } from "./components/CompareRow.tsx";
-import type { DetailTarget } from "./components/DetailDrawer.tsx";
+import {
+  DetailDrawer,
+  type DetailTarget,
+} from "./components/DetailDrawer.tsx";
 import {
   downloadSelections,
   loadSelections,
@@ -19,10 +22,6 @@ interface SectionProps {
   title: string;
   count: number;
 }
-
-const DetailDrawer = lazy(async () => ({
-  default: (await import("./components/DetailDrawer.tsx")).DetailDrawer,
-}));
 
 function SectionHeader(props: SectionProps) {
   return (
@@ -178,12 +177,10 @@ export function App(props: AppProps) {
         </For>
       </div>
 
-      <Suspense>
-        <DetailDrawer
-          target={detailTarget()}
-          onClose={() => setDetailTarget(null)}
-        />
-      </Suspense>
+      <DetailDrawer
+        target={detailTarget()}
+        onClose={() => setDetailTarget(null)}
+      />
     </main>
   );
 }
