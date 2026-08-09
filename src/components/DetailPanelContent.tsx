@@ -33,6 +33,7 @@ export function DetailPanelContent(props: DetailPanelContentProps) {
   });
 
   createEffect(() => {
+    viewer.hide();
     const target = props.target;
     if (target.kind === "character") {
       viewer.showCharacter(target.id);
