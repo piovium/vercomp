@@ -60,3 +60,25 @@ test("keeps the open detail panel mounted during a double-click", async ({
   await segment.dblclick();
   await expect(panel).toHaveAttribute("data-mounted-marker", "true");
 });
+
+test("imports selections from an exported JSON file", async ({ page }) => {
+  const row = page.locator('[data-master="true"]').first();
+  const segment = row.locator(".version-segment").first();
+  const id = await row.getAttribute("data-item-id");
+  const segmentRange = await segment.getAttribute("data-segment");
+  expect(id).not.toBeNull();
+  expect(segmentRange).not.toBeNull();
+
+  const endIndex = Number(segmentRange!.split("-")[1]);
+  const version = `v${await page.locator(".version-heading").nth(endIndex).textContent()}`;
+  await page.getByLabel("导入 JSON 文件").setInputFiles({
+    name: "selection.json",
+    mimeType: "application/json",
+    buffer: Buffer.from(JSON.stringify({ [id!]: version })),
+  });
+
+  await expect(page.getByRole("status")).toHaveText("已导入 1 项");
+  await expect(segment).toHaveAttribute("aria-pressed", "true");
+  await page.reload();
+  await expect(segment).toHaveAttribute("aria-pressed", "true");
+});

@@ -3,6 +3,7 @@ import { createManifestFixture } from "./fixtures.ts";
 import {
   isMasterDiverged,
   loadSelections,
+  parseSelectionJson,
   sanitizeSelections,
   serializeSelections,
   toggleSelection,
@@ -75,5 +76,35 @@ describe("selection state", () => {
         getItem: () => JSON.stringify({ schemaVersion: 2, selections: {} }),
       }),
     ).toEqual({});
+  });
+
+  test("parses exported JSON and reports ignored entries", () => {
+    const manifest = createManifestFixture();
+    expect(
+      parseSelectionJson(
+        manifest,
+        JSON.stringify({ "1": "v3.4.0", "2": "v9.9.9", bad: "v3.4.0" }),
+      ),
+    ).toEqual({
+      selections: { "1": "v3.4.0" },
+      ignoredCount: 2,
+    });
+    expect(parseSelectionJson(manifest, "{}")).toEqual({
+      selections: {},
+      ignoredCount: 0,
+    });
+  });
+
+  test("rejects malformed imports without valid entries", () => {
+    const manifest = createManifestFixture();
+    expect(() => parseSelectionJson(manifest, "not json")).toThrow(
+      "文件不是有效的 JSON",
+    );
+    expect(() => parseSelectionJson(manifest, "[]")).toThrow(
+      "顶层内容必须是 ID 到版本号的对象",
+    );
+    expect(() =>
+      parseSelectionJson(manifest, JSON.stringify({ "1": "v9.9.9" })),
+    ).toThrow("没有可导入的有效选择");
   });
 });

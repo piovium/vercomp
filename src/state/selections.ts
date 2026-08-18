@@ -8,6 +8,11 @@ import type {
 export const STORAGE_KEY = "gi-tcg-version-selector.selections.v1";
 export type SelectionMap = Record<string, Version>;
 
+export interface SelectionImportResult {
+  selections: SelectionMap;
+  ignoredCount: number;
+}
+
 export function segmentContains(
   manifest: CompareManifest,
   segment: VersionSegment,
@@ -46,6 +51,34 @@ export function sanitizeSelections(
     result[String(id)] = version;
   }
   return result;
+}
+
+export function parseSelectionJson(
+  manifest: CompareManifest,
+  source: string,
+): SelectionImportResult {
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(source);
+  } catch {
+    throw new Error("文件不是有效的 JSON");
+  }
+
+  if (parsed === null || typeof parsed !== "object" || Array.isArray(parsed)) {
+    throw new Error("顶层内容必须是 ID 到版本号的对象");
+  }
+
+  const entries = Object.entries(parsed);
+  const selections = sanitizeSelections(
+    manifest,
+    parsed as Record<string, unknown>,
+  );
+  const ignoredCount = entries.length - Object.keys(selections).length;
+  if (entries.length > 0 && Object.keys(selections).length === 0) {
+    throw new Error("没有可导入的有效选择");
+  }
+
+  return { selections, ignoredCount };
 }
 
 export function loadSelections(

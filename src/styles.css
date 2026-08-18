@@ -78,14 +78,49 @@ button {
   white-space: nowrap;
 }
 
+.selection-summary {
+  display: flex;
+  align-items: flex-end;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.import-feedback {
+  color: #97d8ad;
+  font-size: 10px;
+}
+
+.import-feedback.error {
+  color: #ff9d91;
+}
+
+.file-input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
 .toolbar-actions button {
-  border: 1px solid #f0c47f;
   border-radius: 9px;
   padding: 9px 15px;
-  color: #241a0c;
-  background: linear-gradient(135deg, #ffd897, #dba658);
   font-weight: 800;
   cursor: pointer;
+}
+
+.toolbar-actions .import-button {
+  border: 1px solid #697488;
+  color: #e4e8ee;
+  background: linear-gradient(135deg, #343d4d, #252c38);
+}
+
+.toolbar-actions .export-button {
+  border: 1px solid #f0c47f;
+  color: #241a0c;
+  background: linear-gradient(135deg, #ffd897, #dba658);
   box-shadow: 0 5px 20px rgba(233, 184, 110, 0.2);
 }
 
@@ -451,6 +486,10 @@ button {
 
   .app-toolbar p,
   .toolbar-actions span {
+    display: none;
+  }
+
+  .selection-summary {
     display: none;
   }
 

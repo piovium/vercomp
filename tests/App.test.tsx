@@ -106,4 +106,51 @@ describe("App", () => {
     expect(placeholder).toHaveTextContent("所有正式版本均无静态数据");
     expect(placeholder.querySelector(".version-segment")).toBeNull();
   });
+
+  test("imports selections from an exported JSON file", async () => {
+    const view = render(() => <App manifest={createManifestFixture()} />);
+    const file = new File([], "selections.json", { type: "application/json" });
+    Object.defineProperty(file, "text", {
+      value: async () =>
+        JSON.stringify({ "1": "v3.4.0", "2": "v3.4.0", bad: "v9.9.9" }),
+    });
+
+    fireEvent.change(screen.getByLabelText("导入 JSON 文件"), {
+      target: { files: [file] },
+    });
+
+    expect(
+      await screen.findByText("已导入 2 项，忽略 1 项无效数据"),
+    ).toHaveAttribute("role", "status");
+    expect(screen.getByText("2 项已选择")).toBeInTheDocument();
+    const selected = view.container.querySelector(
+      '[data-item-id="1"] [data-segment="1-1"]',
+    );
+    expect(selected).toHaveAttribute("aria-pressed", "true");
+    await waitFor(() => {
+      const persisted = JSON.parse(window.localStorage.getItem(STORAGE_KEY)!);
+      expect(persisted.selections).toEqual({ "1": "v3.4.0", "2": "v3.4.0" });
+    });
+  });
+
+  test("keeps current selections when an import is invalid", async () => {
+    window.localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({ schemaVersion: 1, selections: { "1": "v3.5.0" } }),
+    );
+    render(() => <App manifest={createManifestFixture()} />);
+    const file = new File([], "invalid.json", { type: "application/json" });
+    Object.defineProperty(file, "text", {
+      value: async () => "not json",
+    });
+
+    fireEvent.change(screen.getByLabelText("导入 JSON 文件"), {
+      target: { files: [file] },
+    });
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "导入失败：文件不是有效的 JSON",
+    );
+    expect(screen.getByText("1 项已选择")).toBeInTheDocument();
+  });
 });

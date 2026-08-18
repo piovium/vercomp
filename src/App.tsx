@@ -9,6 +9,7 @@ import {
 import {
   downloadSelections,
   loadSelections,
+  parseSelectionJson,
   saveSelections,
   toggleSelection,
   type SelectionMap,
@@ -38,11 +39,16 @@ function SectionHeader(props: SectionProps) {
 export function App(props: AppProps) {
   const manifest = props.manifest ?? (generatedManifest as CompareManifest);
   const storage = typeof window === "undefined" ? undefined : window.localStorage;
+  let importInput!: HTMLInputElement;
   const [selections, setSelections] = createSignal<SelectionMap>(
     loadSelections(manifest, storage),
   );
   const [expanded, setExpanded] = createSignal<Set<number>>(new Set());
   const [detailTarget, setDetailTarget] = createSignal<DetailTarget | null>(null);
+  const [importFeedback, setImportFeedback] = createSignal<{
+    kind: "success" | "error";
+    message: string;
+  } | null>(null);
 
   createEffect(() => saveSelections(selections(), storage));
 
@@ -63,6 +69,34 @@ export function App(props: AppProps) {
     setSelections((previous) =>
       toggleSelection(manifest, previous, id, segment, isMaster),
     );
+  };
+
+  const importSelections = async (
+    event: Event & { currentTarget: HTMLInputElement },
+  ) => {
+    const input = event.currentTarget;
+    const file = input.files?.[0];
+    if (!file) return;
+
+    try {
+      const result = parseSelectionJson(manifest, await file.text());
+      setSelections(result.selections);
+      const importedCount = Object.keys(result.selections).length;
+      setImportFeedback({
+        kind: "success",
+        message:
+          result.ignoredCount > 0
+            ? `已导入 ${importedCount} 项，忽略 ${result.ignoredCount} 项无效数据`
+            : `已导入 ${importedCount} 项`,
+      });
+    } catch (error) {
+      setImportFeedback({
+        kind: "error",
+        message: `导入失败：${error instanceof Error ? error.message : "无法读取文件"}`,
+      });
+    } finally {
+      input.value = "";
+    }
   };
 
   const renderMaster = (id: number) => {
@@ -120,8 +154,39 @@ export function App(props: AppProps) {
           <h1>卡牌版本比较与选择器</h1>
         </div>
         <div class="toolbar-actions">
-          <span>{Object.keys(selections()).length} 项已选择</span>
-          <button type="button" onClick={() => downloadSelections(selections())}>
+          <div class="selection-summary">
+            <span>{Object.keys(selections()).length} 项已选择</span>
+            <Show when={importFeedback()}>
+              {(feedback) => (
+                <div
+                  class={`import-feedback ${feedback().kind}`}
+                  role={feedback().kind === "error" ? "alert" : "status"}
+                >
+                  {feedback().message}
+                </div>
+              )}
+            </Show>
+          </div>
+          <input
+            ref={importInput}
+            class="file-input"
+            type="file"
+            accept="application/json,.json"
+            aria-label="导入 JSON 文件"
+            onChange={importSelections}
+          />
+          <button
+            class="import-button"
+            type="button"
+            onClick={() => importInput.click()}
+          >
+            导入 JSON
+          </button>
+          <button
+            class="export-button"
+            type="button"
+            onClick={() => downloadSelections(selections())}
+          >
             导出 JSON
           </button>
         </div>
