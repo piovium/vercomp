@@ -140,7 +140,18 @@ describe("data generator", () => {
         },
       ]);
       await writeJson(path.join(dataRoot, "entities.json"), [
-        { id: 20, name: "关联实体", description: "X", skills: [] },
+        {
+          id: 20,
+          name: "关联实体",
+          description: "X",
+          skills: [
+            {
+              id: 21,
+              name: "实体技能",
+              description: index === 1 ? "Y" : "Z",
+            },
+          ],
+        },
         { id: 30, name: "孤立实体", description: "O", skills: [] },
       ]);
     }
@@ -167,6 +178,7 @@ describe("data generator", () => {
       hasDetails: false,
     });
     expect(manifest.itemsById["1"]!.segments).toHaveLength(2);
+    expect(manifest.itemsById["20"]!.segments).toHaveLength(3);
     expect(manifest.masterSegmentsById["1"]).toHaveLength(3);
     expect(JSON.stringify(manifest)).not.toMatch(
       /description|rawDescription|playCost|maxEnergy|"hp"/,

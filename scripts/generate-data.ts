@@ -189,7 +189,11 @@ async function loadStaticSource(staticDataPath: string): Promise<LoadedSource> {
         entity.id,
         "entity",
         entity.name,
-        JSON.stringify(["entity", entity.description ?? ""]),
+        JSON.stringify([
+          "entity",
+          entity.description ?? "",
+          (entity.skills ?? []).map((skill) => skill.description ?? ""),
+        ]),
         names,
         kinds,
       );
