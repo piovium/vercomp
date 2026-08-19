@@ -152,6 +152,18 @@ describe("data generator", () => {
             },
           ],
         },
+        {
+          id: 100,
+          name: "与行动牌同 ID 的实体",
+          description: "不变",
+          skills: [
+            {
+              id: 1001,
+              name: "同 ID 实体技能",
+              description: index === 2 ? "改动后" : "改动前",
+            },
+          ],
+        },
         { id: 30, name: "孤立实体", description: "O", skills: [] },
       ]);
     }
@@ -179,7 +191,15 @@ describe("data generator", () => {
     });
     expect(manifest.itemsById["1"]!.segments).toHaveLength(2);
     expect(manifest.itemsById["20"]!.segments).toHaveLength(3);
+    expect(manifest.itemsById["100"]).toMatchObject({
+      kind: "action-card",
+      segments: [
+        { start: 0, end: 1, representativeVersion: "v3.4.0" },
+        { start: 2, end: 2, representativeVersion: "v3.5.0" },
+      ],
+    });
     expect(manifest.masterSegmentsById["1"]).toHaveLength(3);
+    expect(manifest.masterSegmentsById["100"]).toHaveLength(2);
     expect(JSON.stringify(manifest)).not.toMatch(
       /description|rawDescription|playCost|maxEnergy|"hp"/,
     );

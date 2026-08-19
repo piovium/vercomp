@@ -59,7 +59,7 @@ interface AnalyzerEntry {
 interface IndexedValue {
   kind: Exclude<ItemKind, "placeholder">;
   name: string;
-  signature: string;
+  signaturesByKind: Map<Exclude<ItemKind, "placeholder">, string>;
   rank: number;
 }
 
@@ -112,8 +112,22 @@ function putIndexedValue(
   const rank = KIND_RANK[kind];
   const normalizedName = name?.trim() || String(id);
   const existing = target.get(id);
-  if (!existing || rank > existing.rank) {
-    target.set(id, { kind, name: normalizedName, signature, rank });
+  if (!existing) {
+    target.set(id, {
+      kind,
+      name: normalizedName,
+      signaturesByKind: new Map([[kind, signature]]),
+      rank,
+    });
+  } else {
+    if (!existing.signaturesByKind.has(kind)) {
+      existing.signaturesByKind.set(kind, signature);
+    }
+    if (rank > existing.rank) {
+      existing.kind = kind;
+      existing.name = normalizedName;
+      existing.rank = rank;
+    }
   }
   const knownKind = kinds.get(id);
   const isPreferredKind = !knownKind || rank >= KIND_RANK[knownKind];
@@ -123,6 +137,14 @@ function putIndexedValue(
   if (isPreferredKind && name?.trim()) {
     names.set(id, name.trim());
   }
+}
+
+function combinedSignature(value: IndexedValue): string {
+  return JSON.stringify(
+    [...value.signaturesByKind].sort(
+      ([left], [right]) => KIND_RANK[right] - KIND_RANK[left],
+    ),
+  );
 }
 
 function indexSkill(
@@ -400,7 +422,10 @@ export async function buildManifest(
 
   const signatureFor = (id: number) =>
     source.versions.map(
-      (version) => source.versionIndexes.get(version)?.get(id)?.signature ?? null,
+      (version) => {
+        const value = source.versionIndexes.get(version)?.get(id);
+        return value ? combinedSignature(value) : null;
+      },
     );
   const items = new Map<number, CompareItem>();
   for (const id of [...includedIds].sort((a, b) => a - b)) {
@@ -421,11 +446,15 @@ export async function buildManifest(
     const relatedIds = relatedIdsByMaster.get(masterId) ?? [];
     const signatures = source.versions.map((version) => {
       const index = source.versionIndexes.get(version)!;
-      const own = index.get(masterId)?.signature ?? null;
+      const ownValue = index.get(masterId);
+      const own = ownValue ? combinedSignature(ownValue) : null;
       if (own === null) return null;
       return JSON.stringify([
         own,
-        relatedIds.map((id) => index.get(id)?.signature ?? null),
+        relatedIds.map((id) => {
+          const value = index.get(id);
+          return value ? combinedSignature(value) : null;
+        }),
       ]);
     });
     masterSegments.set(masterId, buildSegments(source.versions, signatures));
