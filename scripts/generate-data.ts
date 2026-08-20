@@ -24,7 +24,8 @@ interface PlayCost {
 interface StaticSkill {
   id: number;
   name?: string;
-  description?: string;
+  rawDescription?: string;
+  playCost?: PlayCost[];
 }
 
 interface StaticEntry {
@@ -147,6 +148,11 @@ function combinedSignature(value: IndexedValue): string {
   );
 }
 
+function skillSignature(skill: StaticSkill): string {
+  // 技能展示文案会展开动态数值；版本分段应以原始描述和费用为准。
+  return JSON.stringify([skill.rawDescription ?? "", skill.playCost ?? []]);
+}
+
 function indexSkill(
   skill: StaticSkill,
   target: Map<number, IndexedValue>,
@@ -158,7 +164,7 @@ function indexSkill(
     skill.id,
     "skill",
     skill.name,
-    JSON.stringify(["skill", skill.description ?? ""]),
+    JSON.stringify(["skill", skillSignature(skill)]),
     names,
     kinds,
   );
@@ -214,7 +220,8 @@ async function loadStaticSource(staticDataPath: string): Promise<LoadedSource> {
         JSON.stringify([
           "entity",
           entity.description ?? "",
-          (entity.skills ?? []).map((skill) => skill.description ?? ""),
+          // 实体行还需随其技能的原始描述和费用变化而切分。
+          (entity.skills ?? []).map(skillSignature),
         ]),
         names,
         kinds,
@@ -234,6 +241,7 @@ async function loadStaticSource(staticDataPath: string): Promise<LoadedSource> {
           "character",
           character.hp ?? null,
           character.maxEnergy ?? null,
+          (character.skills ?? []).map(skillSignature),
         ]),
         names,
         kinds,
@@ -256,12 +264,16 @@ async function loadStaticSource(staticDataPath: string): Promise<LoadedSource> {
           "action-card",
           actionCard.playCost ?? [],
           actionCard.description ?? "",
+          (actionCard.skills ?? []).map(skillSignature),
         ]),
         names,
         kinds,
       );
       if (isMasterActionCard(actionCard)) {
         masterActionCardIds.add(actionCard.id);
+      }
+      for (const skill of actionCard.skills ?? []) {
+        indexSkill(skill, index, names, kinds);
       }
       if (actionCard.relatedCharacterId != null) {
         const relatedIds =

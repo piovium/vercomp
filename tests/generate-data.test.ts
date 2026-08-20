@@ -112,7 +112,9 @@ describe("data generator", () => {
             {
               id: 11,
               name: "关联技能",
-              description: index === 0 ? "A" : "B",
+              description: `展示文案 ${index}`,
+              rawDescription: "造成伤害",
+              playCost: [{ type: "VOID", count: index === 2 ? 2 : 1 }],
             },
           ],
         },
@@ -137,6 +139,14 @@ describe("data generator", () => {
           name: "冒险地点牌",
           tags: ["GCG_TAG_ADVENTURE_PLACE"],
           description: "地点",
+          skills: [
+            {
+              id: 1021,
+              name: "行动牌技能",
+              rawDescription: "执行效果",
+              playCost: [{ type: "VOID", count: index === 2 ? 2 : 1 }],
+            },
+          ],
         },
       ]);
       await writeJson(path.join(dataRoot, "entities.json"), [
@@ -148,7 +158,9 @@ describe("data generator", () => {
             {
               id: 21,
               name: "实体技能",
-              description: index === 1 ? "Y" : "Z",
+              description: `展示文案 ${index}`,
+              rawDescription: "生成效果",
+              playCost: [{ type: "VOID", count: index === 1 ? 2 : 1 }],
             },
           ],
         },
@@ -161,6 +173,7 @@ describe("data generator", () => {
               id: 1001,
               name: "同 ID 实体技能",
               description: index === 2 ? "改动后" : "改动前",
+              rawDescription: index === 2 ? "改动后" : "改动前",
             },
           ],
         },
@@ -190,7 +203,15 @@ describe("data generator", () => {
       hasDetails: false,
     });
     expect(manifest.itemsById["1"]!.segments).toHaveLength(2);
+    expect(manifest.itemsById["11"]!.segments).toEqual([
+      { start: 0, end: 1, representativeVersion: "v3.4.0" },
+      { start: 2, end: 2, representativeVersion: "v3.5.0" },
+    ]);
     expect(manifest.itemsById["20"]!.segments).toHaveLength(3);
+    expect(manifest.itemsById["102"]!.segments).toEqual([
+      { start: 0, end: 1, representativeVersion: "v3.4.0" },
+      { start: 2, end: 2, representativeVersion: "v3.5.0" },
+    ]);
     expect(manifest.itemsById["100"]).toMatchObject({
       kind: "action-card",
       segments: [
