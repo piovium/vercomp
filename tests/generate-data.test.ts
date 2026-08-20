@@ -90,7 +90,7 @@ describe("data generator", () => {
     expect(relatedIdsByMaster.get(1)).toEqual([2, 3]);
   });
 
-  test("builds composite master segments and analyzer-only placeholders", async () => {
+  test("segments by description and builds analyzer-only placeholders", async () => {
     const root = await mkdtemp(path.join(os.tmpdir(), "gi-tcg-compare-"));
     tempDirectories.push(root);
     const staticRoot = path.join(root, "static-data");
@@ -112,8 +112,7 @@ describe("data generator", () => {
             {
               id: 11,
               name: "关联技能",
-              description: `展示文案 ${index}`,
-              rawDescription: "造成伤害",
+              description: index === 0 ? "A" : "B",
               playCost: [{ type: "VOID", count: index === 2 ? 2 : 1 }],
             },
           ],
@@ -143,7 +142,7 @@ describe("data generator", () => {
             {
               id: 1021,
               name: "行动牌技能",
-              rawDescription: "执行效果",
+              description: `展示文案 ${index}`,
               playCost: [{ type: "VOID", count: index === 2 ? 2 : 1 }],
             },
           ],
@@ -159,7 +158,6 @@ describe("data generator", () => {
               id: 21,
               name: "实体技能",
               description: `展示文案 ${index}`,
-              rawDescription: "生成效果",
               playCost: [{ type: "VOID", count: index === 1 ? 2 : 1 }],
             },
           ],
@@ -173,7 +171,6 @@ describe("data generator", () => {
               id: 1001,
               name: "同 ID 实体技能",
               description: index === 2 ? "改动后" : "改动前",
-              rawDescription: index === 2 ? "改动后" : "改动前",
             },
           ],
         },
@@ -202,14 +199,20 @@ describe("data generator", () => {
       segments: [],
       hasDetails: false,
     });
-    expect(manifest.itemsById["1"]!.segments).toHaveLength(2);
+    expect(manifest.itemsById["1"]!.segments).toEqual([
+      { start: 0, end: 0, representativeVersion: "v3.3.0" },
+      { start: 1, end: 1, representativeVersion: "v3.4.0" },
+      { start: 2, end: 2, representativeVersion: "v3.5.0" },
+    ]);
     expect(manifest.itemsById["11"]!.segments).toEqual([
-      { start: 0, end: 1, representativeVersion: "v3.4.0" },
+      { start: 0, end: 0, representativeVersion: "v3.3.0" },
+      { start: 1, end: 1, representativeVersion: "v3.4.0" },
       { start: 2, end: 2, representativeVersion: "v3.5.0" },
     ]);
     expect(manifest.itemsById["20"]!.segments).toHaveLength(3);
     expect(manifest.itemsById["102"]!.segments).toEqual([
-      { start: 0, end: 1, representativeVersion: "v3.4.0" },
+      { start: 0, end: 0, representativeVersion: "v3.3.0" },
+      { start: 1, end: 1, representativeVersion: "v3.4.0" },
       { start: 2, end: 2, representativeVersion: "v3.5.0" },
     ]);
     expect(manifest.itemsById["100"]).toMatchObject({
@@ -222,7 +225,7 @@ describe("data generator", () => {
     expect(manifest.masterSegmentsById["1"]).toHaveLength(3);
     expect(manifest.masterSegmentsById["100"]).toHaveLength(2);
     expect(JSON.stringify(manifest)).not.toMatch(
-      /description|rawDescription|playCost|maxEnergy|"hp"/,
+      /description|playCost|maxEnergy|"hp"/,
     );
   });
 });
