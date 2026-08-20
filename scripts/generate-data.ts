@@ -24,7 +24,7 @@ interface PlayCost {
 interface StaticSkill {
   id: number;
   name?: string;
-  rawDescription?: string;
+  description?: string;
   playCost?: PlayCost[];
 }
 
@@ -150,7 +150,7 @@ function combinedSignature(value: IndexedValue): string {
 
 function skillSignature(skill: StaticSkill): string {
   // 技能展示文案会展开动态数值；版本分段应以原始描述和费用为准。
-  return JSON.stringify([skill.rawDescription ?? "", skill.playCost ?? []]);
+  return JSON.stringify([skill.description ?? "", skill.playCost ?? []]);
 }
 
 function indexSkill(
